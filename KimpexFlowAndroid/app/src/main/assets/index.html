@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KIMPEX FLOW · Periodic Maintenance Report</title>
+  <!-- html2pdf (for export) + print styling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <style>
+    /* global reset & base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10px;
+      color: #000;
+    }
+
+    body {
+      background: #e6e9ef;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* toolbar (print/export) – no-print class hides on print */
+    .toolbar {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 16px;
+      background: #f8faff;
+      padding: 10px 20px;
+      border-radius: 60px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      border: 1px solid #dce2ec;
+    }
+
+    .toolbar button {
+      background: #ffffff;
+      border: 1px solid #bcc6d4;
+      padding: 6px 16px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 11px;
+      color: #1d2b3f;
+      cursor: pointer;
+      transition: 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar button:hover {
+      background: #1d2b3f;
+      color: white;
+      border-color: #1d2b3f;
+      box-shadow: 0 4px 10px rgba(0,20,40,0.08);
+    }
+
+    .toolbar button.primary {
+      background: #1d2b3f;
+      color: white;
+      border-color: #1d2b3f;
+    }
+
+    .toolbar button.primary:hover {
+      background: #2f405a;
+    }
+
+    /* A4 page container – compressed for single page */
+    .report-page {
+      background: #ffffff;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 8mm 10mm 8mm 10mm;
+      border: 1px solid #c6cedb;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.06);
+      position: relative;
+      transition: all 0.1s;
+      margin: 0 auto;
+    }
+
+    /* ---------- HEADER (compact) ---------- */
+    .header {
+      display: flex;
+      border-bottom: 2px solid #000;
+      padding-bottom: 4px;
+      margin-bottom: 4px;
+    }
+
+    .logo-section {
+      width: 12%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-section img {
+      max-width: 100%;
+      max-height: 45px;
+      object-fit: contain;
+    }
+
+    .company-info {
+      width: 88%;
+      padding-left: 8px;
+    }
+
+    .company-name-lg {
+      font-size: 14px;
+      font-weight: bold;
+      color: #002060;
+      line-height: 1.2;
+    }
+
+    .company-name-sm {
+      font-size: 9.5px;
+      font-weight: bold;
+      margin-bottom: 1px;
+    }
+
+    .address-line {
+      font-size: 8.5px;
+      line-height: 1.2;
+    }
+
+    .document-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 11px;
+      margin: 4px 0 5px 0;
+      text-decoration: underline;
+      letter-spacing: 0.5px;
+    }
+
+    /* form inputs & selects – compact */
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
+    textarea,
+    select {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 9px;
+      font-family: inherit;
+      appearance: auto;
+      -webkit-appearance: auto;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Hide file input completely */
+    input[type="file"] {
+      display: none;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    select {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #000;
+      font-weight: normal;
+      padding-right: 8px;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    input[type="time"]:focus,
+    input[type="datetime-local"]:focus,
+    textarea:focus,
+    select:focus {
+      background-color: #eef6ff;
+      outline: 1px solid #b0c4de;
+    }
+
+    input[type="checkbox"] {
+      cursor: pointer;
+      width: 11px;
+      height: 11px;
+      accent-color: #1d2b3f;
+    }
+
+    textarea {
+      resize: vertical;
+      width: 100%;
+      border: 1px solid #000;
+      padding: 3px 4px;
+      box-sizing: border-box;
+      font-size: 9px;
+    }
+
+    /* tables – compact */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 4px;
+    }
+
+    th,
+    td {
+      border: 1px solid #000;
+      padding: 2px 4px;
+      vertical-align: middle;
+      font-size: 8.5px;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      text-align: center;
+      font-weight: bold;
+      font-size: 8.5px;
+    }
+
+    .info-table td.label {
+      font-weight: bold;
+      width: 16%;
+      background-color: #fdfdfd;
+      font-size: 8.5px;
+    }
+
+    .info-table td.value {
+      width: 34%;
+    }
+
+    .grid-table .col-label {
+      font-weight: bold;
+      width: 26%;
+      font-size: 8.5px;
+    }
+
+    .grid-table .col-val {
+      width: 24%;
+    }
+
+    .checklist-table th,
+    .checklist-table td {
+      text-align: center;
+      font-size: 8px;
+    }
+
+    .checklist-table td.text-left {
+      text-align: left;
+    }
+
+    .btn-add {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 2px 8px;
+      font-size: 9px;
+      cursor: pointer;
+      border-radius: 3px;
+      margin-bottom: 3px;
+    }
+
+    .btn-add:hover {
+      background-color: #218838;
+    }
+
+    .btn-remove {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 1px 5px;
+      font-size: 8px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+
+    .note-section {
+      margin-top: 3px;
+      font-size: 9px;
+    }
+
+    .note-section textarea {
+      font-size: 8.5px;
+      padding: 3px 4px;
+      min-height: 36px;
+    }
+
+    /* ===== SIGNATURE TABLE – CENTERED INPUTS with hidden upload ===== */
+    .signature-table {
+      margin-top: 6px;
+    }
+
+    .signature-table td {
+      height: auto;
+      min-height: 22px;
+      text-align: center;
+      vertical-align: middle;
+      padding: 3px 4px;
+      font-size: 8.5px;
+    }
+
+    .signature-table .company-header {
+      font-weight: bold;
+      text-align: center;
+      background-color: #f2f2f2;
+      width: 50%;
+      font-size: 9px;
+    }
+
+    .signature-table input[type="text"],
+    .signature-table input[type="date"] {
+      display: inline-block;
+      width: 65%;
+      margin: 0 auto;
+      text-align: center;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #888;
+      padding: 1px 4px;
+      font-size: 9px;
+      transition: border-color 0.15s;
+    }
+
+    .signature-table input[type="text"]:focus,
+    .signature-table input[type="date"]:focus {
+      border-bottom-color: #1d2b3f;
+      outline: none;
+      background: #f2f7ff;
+    }
+
+    .signature-table td strong {
+      display: inline-block;
+      min-width: 46px;
+      text-align: right;
+      margin-right: 3px;
+      font-weight: 600;
+      font-size: 8.5px;
+    }
+
+    .signature-table .wide-input input[type="text"],
+    .signature-table .wide-input input[type="date"] {
+      width: 72%;
+    }
+
+    /* Signature preview - no border, clickable */
+    .sig-preview {
+      display: inline-block;
+      width: 80px;
+      height: 30px;
+      margin: 2px 2px;
+      padding: 2px;
+      background: #ffffff;
+      vertical-align: middle;
+      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.2s;
+      position: relative;
+    }
+
+    .sig-preview:hover {
+      background: #f5f8ff;
+    }
+
+    .sig-preview img {
+      max-width: 100%;
+      max-height: 26px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .sig-upload-wrapper {
+      display: inline-block;
+      position: relative;
+      vertical-align: middle;
+    }
+
+    .sig-upload-wrapper input[type="file"] {
+      display: none;
+    }
+
+    /* hide toolbar & action buttons on print */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .toolbar {
+        display: none !important;
+      }
+      .report-page {
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        padding: 6mm 8mm;
+        min-height: auto;
+        height: auto;
+      }
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      input[type="time"],
+      input[type="datetime-local"],
+      input[type="file"],
+      textarea,
+      select {
+        border: none !important;
+        background: transparent !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+      }
+      textarea {
+        padding: 0;
+        border: 1px solid #ccc !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .btn-remove {
+        display: none !important;
+      }
+      .signature-table input[type="text"],
+      .signature-table input[type="date"] {
+        border-bottom: 1px solid #aaa !important;
+      }
+      .sig-preview {
+        background: #fff !important;
+        cursor: default;
+      }
+      /* ensure single page */
+      .report-page {
+        page-break-after: avoid;
+        page-break-inside: avoid;
+      }
+      table {
+        page-break-inside: avoid;
+      }
+    }
+
+    /* responsive: shrink page on small screens */
+    @media screen and (max-width: 800px) {
+      .report-page {
+        width: 100%;
+        padding: 6mm 8mm;
+        min-height: auto;
+      }
+      .logo-section {
+        width: 18%;
+      }
+      .company-info {
+        width: 82%;
+        padding-left: 5px;
+      }
+      .company-name-lg {
+        font-size: 12px;
+      }
+    }
+
+    @media screen and (max-width: 500px) {
+      .header {
+        flex-wrap: wrap;
+      }
+      .logo-section {
+        width: 100%;
+        justify-content: flex-start;
+        margin-bottom: 4px;
+      }
+      .company-info {
+        width: 100%;
+        padding-left: 0;
+      }
+      .toolbar button {
+        padding: 5px 12px;
+        font-size: 10px;
+      }
+      .signature-table input[type="text"],
+      .signature-table input[type="date"] {
+        width: 55% !important;
+      }
+      .sig-preview {
+        width: 55px;
+        height: 24px;
+      }
+    }
+
+    /* utility */
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* extra compact grid */
+    .grid-table td input[type="text"],
+    .grid-table td input[type="number"] {
+      font-size: 8.5px;
+    }
+
+    /* datetime-local input styling */
+    input[type="datetime-local"] {
+      width: 100%;
+      padding: 0;
+    }
+
+    /* hide the native date picker icon for cleaner look */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      opacity: 0.5;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== TOOLBAR (print + export) ===== -->
+  <div class="toolbar no-print" id="toolbar">
+    <button onclick="window.print()" title="Print report (A4)">
+      🖨️ Print
+    </button>
+    <button class="primary" id="exportPdfBtn" title="Export as PDF (A4)">
+      ⬇️ Export as PDF
+    </button>
+    <span style="font-size:9px; color:#6a7a8e; margin-left:4px;">A4 · single page</span>
+  </div>
+
+  <!-- ===== REPORT PAGE ===== -->
+  <div class="report-page" id="reportPage">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo-section">
+        <img src="https://www.kimpexflow.com/img/kimpex-logo-color.png" alt="Kimpex Flow Logo" />
+      </div>
+      <div class="company-info">
+        <div class="company-name-lg">KIMPEX FLOW PVT. LTD.</div>
+        <div class="company-name-sm">Kimpex Flow Private Limited</div>
+        <div class="address-line">B-411, Mangolpuri Industrial Area Phase-1, New Delhi - 110083</div>
+        <div class="address-line"><strong>WORKS:-</strong> Plot no 320-321, Ecotech-1, Khadar Ke Marhiya, Greater Noida, Uttar Pradesh 201308</div>
+        <div class="address-line">Email: info@kimpexflow.com | www.kimpexflow.com</div>
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <div class="document-title">NG ODORIZATION SYSTEM PERIODIC MAINTENANCE REPORT</div>
+
+    <!-- CUSTOMER & CALL DETAILS -->
+    <table class="info-table">
+      <tr>
+        <td class="label">Customer Name</td>
+        <td class="value" colspan="3"><input type="text" value="GUJARAT ENERGY LIMITED" /></td>
+      </tr>
+      <tr>
+        <td class="label">Address/Site Location</td>
+        <td class="value"><input type="text" value="-" /></td>
+        <td class="label">Date</td>
+        <td class="value"><input type="date" value="2026-10-14" /></td>
+      </tr>
+      <tr>
+        <td class="label">Call Description</td>
+        <td class="value"><input type="text" value="Preventive maintenance" /></td>
+        <td class="label">AMC</td>
+        <td class="value"><input type="text" value="Yes" /></td>
+      </tr>
+      <tr>
+        <td class="label">Call Received from</td>
+        <td class="value"><input type="text" value="-" /></td>
+        <td class="label">Received Date/Time</td>
+        <td class="value"><input type="datetime-local" value="2026-10-14T09:30" /></td>
+      </tr>
+      <tr>
+        <td class="label">First Respondant Name</td>
+        <td class="value"><input type="text" value="-" /></td>
+        <td class="label">Start Date &amp; Time</td>
+        <td class="value"><input type="datetime-local" value="2026-10-14T14:30" /></td>
+      </tr>
+      <tr>
+        <td class="label">Report No</td>
+        <td class="value"><input type="text" value="KF-GEL-142061-003" /></td>
+        <td class="label">End Date &amp; time</td>
+        <td class="value"><input type="datetime-local" value="2026-10-14T17:30" /></td>
+      </tr>
+      <tr>
+        <td class="label">Complaint</td>
+        <td class="value" colspan="3"><input type="text" value="Four Monthly Maintenance" /></td>
+      </tr>
+    </table>
+
+    <!-- TECHNICAL PARAMETERS -->
+    <table class="grid-table">
+      <thead>
+        <tr>
+          <th style="width:26%;">Description</th>
+          <th style="width:24%;">Value</th>
+          <th style="width:26%;">Description</th>
+          <th style="width:24%;">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-label">GAS Pipeline Pressure (Bar)</td>
+          <td class="col-val"><input type="text" value="23.63" /></td>
+          <td class="col-label">System Serial No.</td>
+          <td class="col-val"><input type="text" value="DO-NG-GG-11/2018 001" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Max Gas Flow (SCMH)</td>
+          <td class="col-val"><input type="text" value="1500" /></td>
+          <td class="col-label">Odorant Tank Type</td>
+          <td class="col-val">
+            <select>
+              <option value="Horizontal">Horizontal</option>
+              <option value="Vertical" selected>Vertical</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td class="col-label">Running Mode LP</td>
+          <td class="col-val"><input type="text" value="-" /></td>
+          <td class="col-label">Regulater 1 Outlet Pressure (Bar)</td>
+          <td class="col-val"><input type="number" step="0.01" value="4.5" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Running Mode HP</td>
+          <td class="col-val"><input type="text" value="-" /></td>
+          <td class="col-label">Regulater 2 Outlet Pressure (Bar)</td>
+          <td class="col-val"><input type="number" step="0.01" value="2.0" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Running Mode MP</td>
+          <td class="col-val">
+            <select>
+              <option value="auto">Auto</option>
+              <option value="fixed" selected>Fixed</option>
+            </select>
+          </td>
+          <td class="col-label">Pump Dosing Pressure (Bar) FOR LP</td>
+          <td class="col-val"><input type="text" value="N/A" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Odorant Tank capacity Itr</td>
+          <td class="col-val"><input type="number" step="0.1" value="575" /></td>
+          <td class="col-label">Pump Dosing Pressure (Bar) FOR HP</td>
+          <td class="col-val"><input type="text" value="N/A" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Concentration (mg/m3)</td>
+          <td class="col-val"><input type="number" step="0.1" value="15" /></td>
+          <td class="col-label">Pump Dosing Pressure (Bar) FOR MP</td>
+          <td class="col-val"><input type="text" value="Approx. 35 bar" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Tank Level (Itrs.)</td>
+          <td class="col-val"><input type="number" step="0.1" value="570" /></td>
+          <td class="col-label">Secondary power Supply to System</td>
+          <td class="col-val"><input type="text" value="-" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Pump Actuation Pressure (Bar) FOR LP</td>
+          <td class="col-val"><input type="text" value="N/A" /></td>
+          <td class="col-label">Battery Volt with Source (V)</td>
+          <td class="col-val"><input type="text" value="-" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Pump Actuation Pressure (Bar) FOR HP</td>
+          <td class="col-val"><input type="text" value="N/A" /></td>
+          <td class="col-label">Battery Volt without Source (V)</td>
+          <td class="col-val"><input type="text" value="-" /></td>
+        </tr>
+        <tr>
+          <td class="col-label">Pump Actuation Pressure (Bar) FOR MP</td>
+          <td class="col-val"><input type="text" value="Approx. 35 bar" /></td>
+          <td class="col-label">Primary power Supply to System</td>
+          <td class="col-val"><input type="text" value="230V AC" /></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- CHECKLIST -->
+    <table class="checklist-table">
+      <thead>
+        <tr>
+          <th style="width:36%; text-align:left;">Parameter</th>
+          <th style="width:8%;">Checked</th>
+          <th style="width:13%;">Before</th>
+          <th style="width:13%;">After</th>
+          <th style="width:30%;">Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="text-left">Pump Performance</td>
+          <td><input type="checkbox" checked /></td>
+          <td><input type="text" value="Not OK" /></td>
+          <td><input type="text" value="Pump B" /></td>
+          <td><input type="text" value="Pump B Working fine, Pump A need to replace" /></td>
+        </tr>
+        <tr><td class="text-left">Verometer Performance</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Odorant storage tank pressure</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Pump &amp; Fill Actuation gas pressure</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Analyze controller Setting</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Electrical Joints&amp; Battery Condition</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Testing for leakages along the</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <!-- <tr><td class="text-left">4 units check valve direction test</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr> -->
+        <tr><td class="text-left">Total Odorant Injected (CC)</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Control Panel values control after maintenance</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Valve position control between tank-pump-line after</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Regulator set pressure control (for tank pressurization) after</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+        <tr><td class="text-left">Pump stroke test after maintenance</td><td><input type="checkbox" checked /></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="text" /></td></tr>
+      </tbody>
+    </table>
+
+    <!-- SERVICE CHECKLIST -->
+    <div class="flex-between no-print">
+      <button type="button" class="btn-add" onclick="addRow()">➕ Add Note Row</button>
+      <span style="font-size:8px; color:#5d6f84;">service checklist</span>
+    </div>
+    <table class="checklist-table" id="serviceTable">
+      <thead>
+        <tr><th colspan="3" style="text-align:center; font-weight:bold; background-color:#f2f2f2; font-size:8.5px;">SERVICE CHECKLIST / Test and Commissioning</th></tr>
+        <tr><th style="width:6%;">SR</th><th style="width:89%; text-align:left;">SERVICE DESCRIPTION / NOTE</th><th style="width:5%;" class="no-print">Action</th></tr>
+      </thead>
+      <tbody id="serviceTableBody"></tbody>
+    </table>
+
+    <!-- NOTES -->
+    <div class="note-section">
+      <strong>Note:</strong>
+      <textarea rows="3" placeholder="Enter additional maintenance notes or remarks here...">Pump- B is functioning properly after maintenance. However, Pump- A's spare part needs to be replaced. The mechanical level meter and all other system components were checked and found to be functioning normally as per standard operating conditions. The battery is nearing the end of its service life and requires replacement. The system is currently operating on a 230 V AC power supply.</textarea>
+    </div>
+
+    <!-- SIGNATURES -->
+    <table class="signature-table">
+      <thead>
+        <tr>
+          <th class="company-header">KIMPEX FLOW PRIVATE LIMITED</th>
+          <th class="company-header">GUJARAT GAS LTD</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>Signature</strong>
+            <span class="sig-upload-wrapper">
+              <input type="file" accept="image/*" id="sigInput1" onchange="previewSignature(this, 'sig1')" />
+              <label for="sigInput1" class="sig-preview" id="sig1" title="Click to upload signature"></label>
+            </span>
+          </td>
+          <td>
+            <strong>Signature</strong>
+            <span class="sig-upload-wrapper">
+              <input type="file" accept="image/*" id="sigInput2" onchange="previewSignature(this, 'sig2')" />
+              <label for="sigInput2" class="sig-preview" id="sig2" title="Click to upload signature"></label>
+            </span>
+          </td>
+        </tr>
+        <tr class="wide-input">
+          <td><strong>Name</strong> <input type="text" value="Bilal Khan" /></td>
+          <td><strong>Name</strong> <input type="text" value="" /></td>
+        </tr>
+        <tr class="wide-input">
+          <td><strong>Date</strong> <input type="date" value="2026-10-14" /></td>
+          <td><strong>Date</strong> <input type="date" value="2026-10-14" /></td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <script>
+    function previewSignature(input, previewId) {
+      const preview = document.getElementById(previewId);
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.innerHTML = '<img src="' + e.target.result + '" alt="signature" />';
+        };
+        reader.readAsDataURL(input.files[0]);
+      } else {
+        preview.innerHTML = '';
+      }
+    }
+
+    function updateSerialNumbers() {
+      const rows = document.querySelectorAll("#serviceTableBody tr");
+      rows.forEach((row, idx) => {
+        const sr = row.querySelector(".sr-no");
+        if (sr) sr.innerText = idx + 1;
+      });
+    }
+
+    function addRow() {
+      const tbody = document.getElementById("serviceTableBody");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="sr-no"></td>
+        <td class="text-left"><input type="text" placeholder="Enter service description..." /></td>
+        <td class="no-print"><button class="btn-remove" onclick="removeRow(this)">✕</button></td>
+      `;
+      tbody.appendChild(tr);
+      updateSerialNumbers();
+    }
+
+    function removeRow(btn) {
+      const row = btn.closest("tr");
+      if (row && document.querySelectorAll("#serviceTableBody tr").length > 1) {
+        row.remove();
+        updateSerialNumbers();
+      } else {
+        alert("Keep at least one row.");
+      }
+    }
+
+    (function initRows() {
+      const tbody = document.getElementById("serviceTableBody");
+      const defaultRows = [
+        "visual check of the system found pump A&B working ok.",
+        "Checked verometer are working ok",
+        "checked battery voltage found 25.9 VDC",
+        "checked scrubber found ok",
+        "checked all tube joint for leakage & tightened where needed.",
+        "checked system performance for both pump A&B for fixed flow in manual & auto mode working fine."
+      ];
+      defaultRows.forEach((text) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="sr-no"></td>
+          <td class="text-left"><input type="text" value="${text}" /></td>
+          <td class="no-print"><button class="btn-remove" onclick="removeRow(this)">✕</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      updateSerialNumbers();
+    })();
+
+    document.getElementById("exportPdfBtn").addEventListener("click", function () {
+      const element = document.getElementById("reportPage");
+      const opt = {
+        margin: [0.4, 0.4, 0.4, 0.4],
+        filename: 'KIMPEX_Periodic_Maintenance_Report.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, letterRendering: true, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+      const toolbar = document.getElementById("toolbar");
+      toolbar.style.display = "none";
+      html2pdf().set(opt).from(element).save().then(() => {
+        toolbar.style.display = "flex";
+      }).catch(() => {
+        toolbar.style.display = "flex";
+      });
+    });
+  </script>
+
+</body>
+</html>
